@@ -10,10 +10,6 @@ format:
     theme: 
       light: united
       dark: vapor
-    code-tools:
-      source: true
-      toggle: false
-      caption: none
 execute:
  message: false
  warning: false
@@ -134,9 +130,9 @@ flows_countries <- arg |>
 ```
 ### Flowmap
 
-Get started with MapBox
 ```{r}
 #| echo: false
+
 Sys.setenv(MAPBOX_TOKEN = "pk.eyJ1IjoiZmJhdGhvcnkiLCJhIjoiY20xa205OWNrMG03NzJrc2U3dm4zY2M2ZyJ9.t8Ss_lYW5FHp1GaDYxPT_g")
 ```
 
