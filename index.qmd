@@ -1,7 +1,10 @@
 ---
 title: "OpenSci workshop assignment"
-author: "Florencia Bathory"
-institution: "EDSD 2024/2025"
+author:
+  - name: Florencia Bathory
+    orcid: 0000-0002-2518-5422
+    email: bathory@demogr.mpg.de
+    affiliations: EDSD 2024/2025
 format:
   html: 
     theme: 
