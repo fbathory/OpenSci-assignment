@@ -154,8 +154,15 @@ flowmap <- flowmapblue(
   clustering = TRUE
   )
 
-htmlwidgets::saveWidget(flowmap, "flowmap.html")
+```
 
+```{r}
+#| output: false
+
+htmlwidgets::saveWidget(flowmap, "flowmap.html")
+```
+
+```{r}
 shiny::tags$iframe(src = "flowmap.html", width = "100%", height = "600px")
 ```
 
