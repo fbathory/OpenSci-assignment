@@ -1,6 +1,6 @@
 ---
 title: "OpenSci workshop assignment"
-author: "Flor Bathory"
+author: "Florencia Bathory"
 institution: "EDSD 2024/2025"
 format:
   html: 
