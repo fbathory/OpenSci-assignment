@@ -1,0 +1,160 @@
+---
+title: "OpenSci workshop assignment"
+author:
+  - name: Florencia Bathory
+    orcid: 0000-0002-2518-5422
+    email: bathory@demogr.mpg.de
+    affiliations: EDSD 2024/2025
+format:
+  html: 
+    theme: 
+      light: united
+      dark: vapor
+execute:
+ message: false
+ warning: false
+---
+
+## Packages
+Here is the list of the packages used for this document
+```{r}
+#| echo: true
+#| warning: false
+#| message: false
+
+library(sf)
+library(spData)
+library(countrycode)
+library(flowmapblue)
+library(flowmapper)
+library(shiny)
+library(tidyverse)
+library(plotly)
+library(countrycode)
+```
+
+## Read the data
+Next I get the data that I am working with.
+```{r}
+#| echo: true
+data_schmig <- read.csv("data_processed/openalex_2024_V1_scholarlymigration_countryflows_enriched.csv")
+```
+
+I am interested in migration of scholars from and to Argentina, so I am filtering the database to obtain only these flows. Then I will use 2 datasets to distinct whether they are coming from or going to Argentina for the plots.
+
+```{r}
+
+arg <- data_schmig |> 
+ filter(iso3codefrom == "ARG" | iso3codeto == "ARG")
+
+arg_come <- arg |> 
+ filter(iso3codeto == "ARG")
+
+arg_to <- arg |> 
+ filter(iso3codefrom == "ARG")
+```
+
+## Plots
+### Origin of coming migrants
+I want to know the region where the migrant scholars going to Argentina are from originally from. In order to do that, I have to handle a little bit more of the data in order to properly plot it.
+```{r}
+#| fig-cap: "No. of migrants by year and region of origin"
+#| fig-alt: "No. of migrants by year and region of origin"
+
+arg_come_reg <- arg_come |> 
+ group_by(year, regionfrom, iso3codeto) |> 
+ summarise(n_migrations = sum(n_migrations))
+
+ggplotly(ggplot(data = arg_come_reg) +
+ geom_point(aes(x = year, y = n_migrations, color = regionfrom, shape = regionfrom, size = n_migrations,
+                text = paste("Region of origin: ", regionfrom,"<br>No. of migrants: ", n_migrations)))+
+ scale_shape_manual("Region of origin", values = c(0, 1, 2, 4, 5, 6, 12))+
+ scale_color_discrete("Region of origin")+
+ theme_bw()+
+ guides(size = FALSE)+
+ labs(x = "Year",
+      y = "Number of migrants"),
+ tooltip = c("text")
+ )
+
+```
+
+### Destination of leaving migrants
+
+```{r}
+#| fig-cap: "No. of migrants by year and region of destination"
+#| fig-alt: "No. of migrants by year and region of destination"
+
+arg_to_reg <- arg_to |> 
+ group_by(year, regionto, iso3codefrom) |> 
+ summarise(n_migrations = sum(n_migrations))
+
+ggplotly(ggplot(data = arg_to_reg) +
+ geom_point(aes(x = year, y = n_migrations, color = regionto, shape = regionto, size = n_migrations,
+                text = paste("Region of destination: ", regionto,"<br>No. of migrants: ", n_migrations)))+
+ scale_shape_manual("Region of destination", values = c(0, 1, 2, 4, 5, 6, 12))+
+ scale_color_discrete("Region of destination")+
+ guides(size = FALSE)+
+ theme_bw()+
+ labs(x = "Year",
+      y = "Number of migrants"),
+ tooltip = c("text")
+ )
+```
+
+
+## Countries
+I get the countries, the centroids of those countries and adapt the iso code for the Argentina data frame to build the map
+
+```{r}
+countries <- spData::world
+
+countries_centroids <- countries |> 
+  st_centroid() |> # finds a center of each country'spolygon
+  st_coordinates() |>  # extracts numeric coorindates from the POINT geometry
+  as.data.frame() |> # converts the matrix to a data.frame 
+  setNames(c("lon", "lat")) |> # renames the columns
+  cbind(countries) |> # adds back all the columns (except for geometry) form `countries`
+  select(iso_a2, lon, lat, name_long) |> # only selects a few columns that we really need
+  rename("id" = iso_a2)
+
+flows_countries <- arg |> 
+ mutate(
+    iso2codefrom = countrycode(iso3codefrom,
+      origin = "iso3c",
+      destination = "iso2c"),
+    iso2codeto = countrycode(iso3codeto,
+      origin = "iso3c",
+      destination = "iso2c")
+  )
+```
+### Flowmap
+
+```{r}
+#| echo: false
+
+Sys.setenv(MAPBOX_TOKEN = "pk.eyJ1IjoiZmJhdGhvcnkiLCJhIjoiY20xa205OWNrMG03NzJrc2U3dm4zY2M2ZyJ9.t8Ss_lYW5FHp1GaDYxPT_g")
+```
+
+I arrange the df and plot the flowmap
+```{r}
+
+arg_flows <- flows_countries |>
+  group_by(origin = iso2codefrom, dest = iso2codeto) |>
+  summarise(count = sum(n_migrations, na.rm = TRUE), .groups = "drop") |> 
+  collect()
+
+flowmap <- flowmapblue(
+  locations = countries_centroids,
+  flows = arg_flows,
+  mapboxAccessToken = Sys.getenv("MAPBOX_TOKEN"),
+  darkMode = TRUE,
+  animation = FALSE,
+  clustering = TRUE
+  )
+
+htmlwidgets::saveWidget(flowmap, "flowmap.html")
+
+shiny::tags$iframe(src = "flowmap.html", width = "100%", height = "600px")
+```
+
