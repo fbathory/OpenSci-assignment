@@ -136,6 +136,7 @@ flows_countries <- arg |>
 
 Get started with MapBox
 ```{r}
+#| echo: false
 Sys.setenv(MAPBOX_TOKEN = "pk.eyJ1IjoiZmJhdGhvcnkiLCJhIjoiY20xa205OWNrMG03NzJrc2U3dm4zY2M2ZyJ9.t8Ss_lYW5FHp1GaDYxPT_g")
 ```
 
